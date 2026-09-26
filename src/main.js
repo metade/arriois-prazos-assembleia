@@ -1,6 +1,6 @@
 import './style.css'
-import { calculate, earliestSessionDate, REVIEWED_ON, SOURCES } from './rules.js'
-import { daysBefore, longDate, parseDate, parts, shortMonth, todayInLisbon } from './dates.js'
+import { calculate, carnivalAffects, earliestSessionDate, REVIEWED_ON, SOURCES } from './rules.js'
+import { daysBefore, longDate, parseDate, parts, todayInLisbon } from './dates.js'
 import { readUrlState, urlForState } from './url-state.js'
 
 const app = document.querySelector('#app')
@@ -11,7 +11,7 @@ app.innerHTML = `
     <form class="controls" id="controls">
       <div class="field"><label for="session-date">Data da sessão</label><input id="session-date" type="date" required aria-describedby="planning-note" /></div>
       <fieldset class="field"><legend>Tipo de sessão</legend><div class="segment"><label><input type="radio" name="type" value="ordinaria" /><span>Ordinária</span></label><label><input type="radio" name="type" value="extraordinaria" checked /><span>Extraordinária</span></label></div></fieldset>
-      <div class="control-foot"><p id="planning-note"></p><label class="check"><input id="carnival" type="checkbox" /><span>Contar Carnaval como feriado facultativo</span></label></div>
+      <div class="control-foot" id="control-foot"><p id="planning-note"></p><label class="check" id="carnival-option"><input id="carnival" type="checkbox" /><span>Contar Carnaval como feriado facultativo</span></label></div>
     </form>
     <section class="calendar" aria-labelledby="calendar-title"><div class="section-heading"><div><p class="eyebrow">Da preparação ao PAOD</p><h2 id="calendar-title">O calendário da sessão</h2></div><p id="session-summary"></p></div><div id="results" aria-live="polite"></div></section>
     <details class="other" id="other"><summary><span><strong>Outros prazos</strong><small>Pedido individual para a ordem do dia formal e condições de sessões extraordinárias</small></span><span aria-hidden="true">⌄</span></summary><div id="other-content"></div></details>
@@ -60,18 +60,54 @@ function holidayMarkup(holidays = []) {
   return `<p class="holiday">Na contagem: ${unique.map(item => `${item.name} (${longDate(item.date)})`).join('; ')}.</p>`
 }
 
+const phaseTitles = {
+  2: 'Expedir a convocatória e enviar a ordem do dia e a documentação',
+  3: 'Afixar o edital e divulgar a sessão'
+}
+
+function deadlineMarkup(items) {
+  const groups = new Map()
+  for (const item of items) {
+    if (!groups.has(item.date)) groups.set(item.date, [])
+    groups.get(item.date).push(item)
+  }
+  return [...groups].map(([date, dayItems]) => {
+    const phases = []
+    for (const item of dayItems) {
+      const last = phases.at(-1)
+      if (item.phase && last?.phase === item.phase) last.items.push(item)
+      else phases.push({ phase: item.phase, items: [item] })
+    }
+    const holidays = dayItems.flatMap(item => item.holidays || [])
+    const prefix = dayItems.every(item => item.nature === 'Sugestão interna') ? 'Meta interna · até'
+      : dayItems.every(item => item.nature === 'Preferencial') ? 'Preferencialmente até' : 'Até'
+    return `<section class="deadline-day" aria-label="${prefix} ${longDate(date)}">
+      <div class="day-heading"><time datetime="${date}"><span>${prefix}</span> ${longDate(date)}</time></div>
+      <div class="day-actions">${phases.map(({ phase, items: actions }) => `<article class="deadline">
+        <div class="deadline-heading">${phase ? `<span class="phase-number" aria-label="Etapa ${phase}">${phase}</span>` : ''}<h3>${actions.length > 1 ? phaseTitles[phase] : actions[0].title}</h3></div>
+        ${actions.map(item => `<div class="requirement"><p class="route">${item.route}</p>${actions.length > 1 ? `<h4>${item.title}</h4>` : ''}<p>${item.detail}</p><p class="source">${sourceMarkup(item.source)}</p></div>`).join('')}
+        <span class="badge ${actions[0].nature === 'Obrigatório' ? '' : 'soft'}">${actions[0].nature}</span>
+      </article>`).join('')}</div>
+      ${holidayMarkup(holidays)}
+    </section>`
+  }).join('')
+}
+
 function render() {
   if (!dateInput.value) { results.innerHTML = '<p class="error">Escolha uma data para ver os prazos.</p>'; other.innerHTML = ''; return }
   try { parseDate(dateInput.value) } catch { results.innerHTML = '<p class="error">Introduza uma data válida.</p>'; other.innerHTML = ''; return }
   const type = selectedType()
   const model = calculate(dateInput.value, type, { carnival: carnivalInput.checked, initiativeDate })
   const planningNote = document.querySelector('#planning-note')
+  const carnivalOption = document.querySelector('#carnival-option')
   planningNote.hidden = !automaticDate
+  carnivalOption.hidden = !carnivalAffects(dateInput.value, type)
+  document.querySelector('#control-foot').hidden = planningNote.hidden && carnivalOption.hidden
   planningNote.textContent = automaticDate
     ? `Primeira data calculada desde hoje (${longDate(todayInLisbon())}), com afixação e expedição em dia útil. Confirme a expedição, a receção e o acesso aos anexos.`
     : ''
   document.querySelector('#session-summary').textContent = `${type === 'ordinaria' ? 'Sessão ordinária' : 'Sessão extraordinária'} · ${longDate(dateInput.value)}`
-  results.innerHTML = model.dates.map(item => `<article class="deadline"><div class="date-mark"><time datetime="${item.date}"><span>${String(parts(parseDate(item.date)).day).padStart(2, '0')}</span><small>${shortMonth(item.date)} ${parts(parseDate(item.date)).year}</small></time></div><div class="deadline-body"><h3>${item.title}</h3><p class="route">${item.route}</p><p>${item.detail}</p>${holidayMarkup(item.holidays)}<p class="source">${sourceMarkup(item.source)}</p></div><span class="badge ${item.nature === 'Obrigatório' ? '' : 'soft'}">${item.nature}</span></article>`).join('')
+  results.innerHTML = deadlineMarkup(model.dates)
 
   const request = model.memberRequest
   other.innerHTML = `<section class="other-block"><h3>Pedido de membro para a ordem do dia formal</h3><p>Um membro pode pedir, por escrito, a inclusão de um assunto da competência da Assembleia. É um direito distinto das recomendações, moções e votos apresentados no PAOD.</p><div class="conflict"><div><span>Lei nacional · ${type === 'ordinaria' ? '5' : '8'} dias úteis</span><strong>${longDate(request.national.date)}</strong><small>${sourceMarkup(request.nationalSource)}</small>${holidayMarkup(request.national.holidays)}</div><div><span>Regimento de Arroios · ${type === 'ordinaria' ? '8' : '5'} dias úteis</span><strong>${longDate(request.local.date)}</strong><small>${sourceMarkup(request.localSource)}</small>${holidayMarkup(request.local.holidays)}</div></div><p class="caution"><strong>Divergência:</strong> os prazos não coincidem. Para planeamento cauteloso, considere o mais cedo: <strong>${longDate(request.cautious)}</strong>. A aplicação jurídica da divergência exige apreciação própria.</p></section>${type === 'extraordinaria' ? `<section class="other-block"><h3>Iniciativa ou requerimento de sessão extraordinária</h3><p>A lei exige convocação nos <strong>5 dias seguintes</strong> à iniciativa da Mesa ou receção do requerimento, e realização da sessão <strong>3 a 10 dias depois</strong> da convocação. O regimento exige ainda pelo menos <strong>5 dias de calendário</strong> entre convocação e sessão. Para esta sessão, a janela conjunta de convocação é de <strong>${longDate(daysBefore(dateInput.value, 10))}</strong> a <strong>${longDate(model.callDate)}</strong>, sujeita também ao prazo contado da iniciativa.</p><label for="initiative-date">Data da iniciativa ou receção do requerimento <span class="optional">opcional</span></label><input id="initiative-date" type="date" value="${initiativeDate}" /><div id="initiative-result">${model.initiative ? `<p>Convocação até <strong>${longDate(model.initiative.latestCall)}</strong> pelo prazo de 5 dias após a iniciativa/requerimento. ${model.initiative.latestCall < daysBefore(dateInput.value, 10) || model.initiative.date > model.callDate ? 'As datas introduzidas não cabem na janela calculada para esta sessão; confirme os factos e os prazos.' : 'Compare esta data com a janela acima.'}</p>` : '<p>Introduza a data para calcular o limite ligado à iniciativa ou ao requerimento. Sem ela, esse limite não pode ser determinado.</p>'}</div><p class="source">${sourceMarkup({ label: 'Lei n.º 75/2013, art. 12.º, n.os 2 e 3', url: SOURCES.law })} · ${sourceMarkup({ label: 'Regimento, art. 24.º', url: SOURCES.reg })}</p></section>` : `<section class="other-block"><h3>Sessões ordinárias</h3><p>A lei prevê quatro sessões anuais, em abril, junho, setembro e novembro ou dezembro. O PAOD tem previsão legal para estas sessões; o regimento de Arroios também o prevê nas extraordinárias.</p><p class="source">${sourceMarkup([{ label: 'Lei n.º 75/2013, arts. 11.º e 52.º', url: SOURCES.law }, { label: 'Regimento, arts. 23.º e 33.º', url: SOURCES.reg }])}</p></section>`}`

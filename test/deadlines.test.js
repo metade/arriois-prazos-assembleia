@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { easter, holidays, latestWorkingDate, workingDaysBefore } from '../src/holidays.js'
-import { calculate, earliestSessionDate } from '../src/rules.js'
+import { calculate, carnivalAffects, earliestSessionDate } from '../src/rules.js'
 import { todayInLisbon } from '../src/dates.js'
 
 test('feriados móveis em vários anos', () => {
@@ -26,6 +26,13 @@ test('13 de junho em Lisboa e Carnaval facultativo', () => {
   assert.equal(workingDaysBefore('2026-02-19', 2, true).date, '2026-02-16')
 })
 
+test('opção de Carnaval só é relevante quando altera um prazo da sessão', () => {
+  assert.equal(carnivalAffects('2026-02-19', 'extraordinaria'), true)
+  assert.equal(carnivalAffects('2026-02-24', 'ordinaria'), true)
+  assert.equal(carnivalAffects('2026-10-07', 'extraordinaria'), false)
+  assert.equal(carnivalAffects('2026-10-07', 'ordinaria'), false)
+})
+
 test('contagem cruza o ano e usa os feriados de ambos os anos', () => {
   assert.equal(workingDaysBefore('2027-01-04', 2).date, '2026-12-30')
   assert.equal(workingDaysBefore('2027-01-04', 2).holidays[0].date, '2027-01-01')
@@ -35,6 +42,7 @@ test('sessão extraordinária de 7 de outubro de 2026', () => {
   const result = calculate('2026-10-07', 'extraordinaria')
   assert.equal(result.callDate, '2026-10-02')
   assert.equal(result.dates.find(x => x.id === 'documents').date, '2026-10-02')
+  assert.equal(result.dates.find(x => x.id === 'edict').date, '2026-10-02')
   assert.equal(result.dates.find(x => x.id === 'publicity').date, '2026-10-02')
   assert.equal(result.memberRequest.national.date, '2026-09-24')
   assert.equal(result.memberRequest.local.date, '2026-09-29')
@@ -46,10 +54,21 @@ test('sessão extraordinária de 7 de outubro de 2026', () => {
 test('sessão ordinária tem convocação, informação da Junta e conflito próprios', () => {
   const result = calculate('2026-10-07', 'ordinaria')
   assert.equal(result.callDate, '2026-09-29')
+  assert.equal(result.dates.find(x => x.id === 'edict').date, '2026-09-29')
+  assert.equal(result.dates.find(x => x.id === 'documents').date, '2026-10-02')
+  assert.equal(result.dates.find(x => x.id === 'publicity').date, '2026-10-02')
   assert.equal(result.dates.find(x => x.id === 'activity').date, '2026-10-02')
   assert.equal(result.memberRequest.national.date, '2026-09-29')
   assert.equal(result.memberRequest.local.date, '2026-09-24')
   assert.equal(result.memberRequest.cautious, '2026-09-24')
+})
+
+test('prazos de convocação e documentação podem divergir numa sessão extraordinária', () => {
+  const result = calculate('2026-10-10', 'extraordinaria')
+  assert.equal(result.dates.find(x => x.id === 'convocation').date, '2026-10-02')
+  assert.equal(result.dates.find(x => x.id === 'edict').date, '2026-10-02')
+  assert.equal(result.dates.find(x => x.id === 'documents').date, '2026-10-08')
+  assert.equal(result.dates.find(x => x.id === 'publicity').date, '2026-10-08')
 })
 
 test('prazo ligado à iniciativa só é calculado quando a data é fornecida', () => {

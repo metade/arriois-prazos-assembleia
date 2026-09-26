@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Os prazos, antes da assembleia — Arroios</title>
+  <desc id="desc">Calendário para preparar a convocatória, os documentos e a divulgação da sessão.</desc>
+  <rect width="1200" height="630" fill="#173c42"/>
+  <circle cx="1102" cy="70" r="252" fill="#21545a"/>
+  <circle cx="1092" cy="556" r="256" fill="#225057"/>
+  <path d="M0 566H1200" stroke="#84b8a9" stroke-opacity=".35" stroke-width="2"/>
+
+  <circle cx="88" cy="83" r="31" fill="none" stroke="#d7e9e2" stroke-width="3"/>
+  <text x="88" y="95" text-anchor="middle" font-family="Georgia, serif" font-size="36" fill="#f7f8f6">A</text>
+  <text x="139" y="76" font-family="Arial, sans-serif" font-size="18" font-weight="700" letter-spacing="3" fill="#f7f8f6">ASSEMBLEIA DE ARROIOS</text>
+  <text x="140" y="102" font-family="Arial, sans-serif" font-size="14" font-weight="700" letter-spacing="3" fill="#b9d9ce">PRAZOS DA SESSÃO</text>
+
+  <text x="64" y="251" font-family="Georgia, serif" font-size="71" fill="#f7f8f6">Os prazos, antes</text>
+  <text x="64" y="335" font-family="Georgia, serif" font-size="71" fill="#f7f8f6">da assembleia.</text>
+  <rect x="67" y="367" width="102" height="6" rx="3" fill="#bd784a"/>
+  <text x="65" y="430" font-family="Arial, sans-serif" font-size="25" fill="#d5e8e2">Convocatória, documentos e divulgação</text>
+  <text x="65" y="464" font-family="Arial, sans-serif" font-size="25" fill="#d5e8e2">com os prazos à vista.</text>
+
+  <g transform="translate(786 140)">
+    <rect x="9" y="12" width="344" height="382" rx="16" fill="#0c292e" opacity=".34"/>
+    <rect width="344" height="382" rx="16" fill="#f7f8f6"/>
+    <rect width="344" height="71" rx="16" fill="#e9f0ec"/>
+    <rect y="55" width="344" height="16" fill="#e9f0ec"/>
+    <circle cx="32" cy="36" r="5" fill="#bd784a"/>
+    <circle cx="50" cy="36" r="5" fill="#bd784a"/>
+    <text x="74" y="42" font-family="Arial, sans-serif" font-size="15" font-weight="700" letter-spacing="1.1" fill="#315b58">CALENDÁRIO DA SESSÃO</text>
+    <path d="M54 118V316" stroke="#a9c9bd" stroke-width="3"/>
+    <circle cx="54" cy="124" r="21" fill="#1d615a"/>
+    <circle cx="54" cy="222" r="21" fill="#1d615a"/>
+    <circle cx="54" cy="320" r="21" fill="#1d615a"/>
+    <text x="54" y="132" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#fff">1</text>
+    <text x="54" y="230" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#fff">2</text>
+    <text x="54" y="328" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#fff">3</text>
+    <text x="91" y="120" font-family="Arial, sans-serif" font-size="19" font-weight="700" fill="#173137">Fechar</text>
+    <text x="91" y="145" font-family="Arial, sans-serif" font-size="17" fill="#536b69">a documentação</text>
+    <text x="91" y="218" font-family="Arial, sans-serif" font-size="19" font-weight="700" fill="#173137">Enviar</text>
+    <text x="91" y="243" font-family="Arial, sans-serif" font-size="17" fill="#536b69">aos membros</text>
+    <text x="91" y="316" font-family="Arial, sans-serif" font-size="19" font-weight="700" fill="#173137">Divulgar</text>
+    <text x="91" y="341" font-family="Arial, sans-serif" font-size="17" fill="#536b69">ao público</text>
+  </g>
+
+  <text x="64" y="608" font-family="Arial, sans-serif" font-size="18" font-weight="700" letter-spacing=".8" fill="#d5e8e2">prazos-assembleia.decidimosarroios.pt</text>
+</svg>
