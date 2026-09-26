@@ -4,6 +4,8 @@ Calculadora estática de apoio à preparação das sessões da Assembleia de Fre
 
 A data inicial é calculada a partir do dia atual em Lisboa: procura a primeira sessão para a qual os prazos obrigatórios de convocação, entrega de documentos, publicidade e, nas sessões ordinárias, informação da Junta ainda podem ser cumpridos a partir de hoje. Para afixação e expedição, o planeamento só usa dias úteis, sem fins de semana ou feriados; numa sessão extraordinária, respeita também a janela de 3 a 10 dias entre convocação e sessão. É uma hipótese de planeamento, não uma garantia de que a expedição e a receção serão realizadas a tempo. Uma data alterada pela pessoa utilizadora mantém-se ao trocar o tipo de sessão.
 
+A data, o tipo de sessão, a opção de Carnaval e a data de iniciativa (quando preenchida) ficam no URL para partilhar o calendário. Por exemplo: `?date=2026-10-07&type=extraordinaria`. Sem uma data válida no URL, a página calcula a primeira data possível a partir do dia atual em Lisboa.
+
 ## Desenvolvimento
 
 ```sh

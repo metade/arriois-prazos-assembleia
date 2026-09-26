@@ -1,12 +1,13 @@
 import './style.css'
 import { calculate, earliestSessionDate, REVIEWED_ON, SOURCES } from './rules.js'
 import { daysBefore, longDate, parseDate, parts, shortMonth, todayInLisbon } from './dates.js'
+import { readUrlState, urlForState } from './url-state.js'
 
 const app = document.querySelector('#app')
 app.innerHTML = `
-  <header class="site-header"><div class="shell header-inner"><div class="brand"><span class="seal" aria-hidden="true">A</span><span>Assembleia de Arroios <small>Calendário de preparação</small></span></div><a href="#fontes">Fontes e regras</a></div></header>
+  <header class="site-header"><div class="shell header-inner"><div class="brand"><span class="seal" aria-hidden="true">A</span><span>Assembleia de Arroios <small>Prazos da sessão</small></span></div><a href="#fontes">Fontes e regras</a></div></header>
   <main class="shell">
-    <div class="intro"><p class="eyebrow">Ferramenta de preparação de sessões</p><h1>Os prazos, antes da assembleia.</h1><p class="lead">Escolha a data e veja o que a Junta, a Mesa e os membros precisam de preparar.</p></div>
+    <div class="intro"><p class="eyebrow">Ferramenta de preparação de sessões da Assembleia de Freguesia de Arroios</p><h1>Os prazos, antes da assembleia.</h1><p class="lead">Escolha a data da sessão para saber até quando devem ser enviadas a convocatória, a ordem do dia, a documentação e as propostas para o PAOD.</p></div>
     <form class="controls" id="controls">
       <div class="field"><label for="session-date">Data da sessão</label><input id="session-date" type="date" required aria-describedby="planning-note" /></div>
       <fieldset class="field"><legend>Tipo de sessão</legend><div class="segment"><label><input type="radio" name="type" value="ordinaria" /><span>Ordinária</span></label><label><input type="radio" name="type" value="extraordinaria" checked /><span>Extraordinária</span></label></div></fieldset>
@@ -22,7 +23,31 @@ const carnivalInput = document.querySelector('#carnival')
 const results = document.querySelector('#results')
 const other = document.querySelector('#other-content')
 let automaticDate = true
-dateInput.value = earliestSessionDate(todayInLisbon(), 'extraordinaria')
+let initiativeDate = ''
+
+function selectedType() {
+  return document.querySelector('input[name="type"]:checked').value
+}
+
+function loadUrlState() {
+  const state = readUrlState(window.location.search)
+  document.querySelector(`input[name="type"][value="${state.type}"]`).checked = true
+  carnivalInput.checked = state.carnival
+  initiativeDate = state.initiativeDate
+  automaticDate = !state.date
+  dateInput.value = state.date || earliestSessionDate(todayInLisbon(), state.type, { carnival: state.carnival })
+  render()
+}
+
+function syncUrl() {
+  const url = urlForState(window.location.href, {
+    date: dateInput.value,
+    type: selectedType(),
+    carnival: carnivalInput.checked,
+    initiativeDate
+  })
+  window.history.replaceState(null, '', url)
+}
 
 function sourceMarkup(source) {
   const sources = Array.isArray(source) ? source : [source]
@@ -38,30 +63,36 @@ function holidayMarkup(holidays = []) {
 function render() {
   if (!dateInput.value) { results.innerHTML = '<p class="error">Escolha uma data para ver os prazos.</p>'; other.innerHTML = ''; return }
   try { parseDate(dateInput.value) } catch { results.innerHTML = '<p class="error">Introduza uma data válida.</p>'; other.innerHTML = ''; return }
-  const type = document.querySelector('input[name="type"]:checked').value
-  const initiativeInput = document.querySelector('#initiative-date')
-  const initiativeDate = initiativeInput?.value || ''
+  const type = selectedType()
   const model = calculate(dateInput.value, type, { carnival: carnivalInput.checked, initiativeDate })
-  document.querySelector('#planning-note').textContent = automaticDate
+  const planningNote = document.querySelector('#planning-note')
+  planningNote.hidden = !automaticDate
+  planningNote.textContent = automaticDate
     ? `Primeira data calculada desde hoje (${longDate(todayInLisbon())}), com afixação e expedição em dia útil. Confirme a expedição, a receção e o acesso aos anexos.`
-    : 'Data escolhida por si. Confirme os prazos e as formalidades de expedição e receção.'
+    : ''
   document.querySelector('#session-summary').textContent = `${type === 'ordinaria' ? 'Sessão ordinária' : 'Sessão extraordinária'} · ${longDate(dateInput.value)}`
   results.innerHTML = model.dates.map(item => `<article class="deadline"><div class="date-mark"><time datetime="${item.date}"><span>${String(parts(parseDate(item.date)).day).padStart(2, '0')}</span><small>${shortMonth(item.date)} ${parts(parseDate(item.date)).year}</small></time></div><div class="deadline-body"><h3>${item.title}</h3><p class="route">${item.route}</p><p>${item.detail}</p>${holidayMarkup(item.holidays)}<p class="source">${sourceMarkup(item.source)}</p></div><span class="badge ${item.nature === 'Obrigatório' ? '' : 'soft'}">${item.nature}</span></article>`).join('')
 
   const request = model.memberRequest
   other.innerHTML = `<section class="other-block"><h3>Pedido de membro para a ordem do dia formal</h3><p>Um membro pode pedir, por escrito, a inclusão de um assunto da competência da Assembleia. É um direito distinto das recomendações, moções e votos apresentados no PAOD.</p><div class="conflict"><div><span>Lei nacional · ${type === 'ordinaria' ? '5' : '8'} dias úteis</span><strong>${longDate(request.national.date)}</strong><small>${sourceMarkup(request.nationalSource)}</small>${holidayMarkup(request.national.holidays)}</div><div><span>Regimento de Arroios · ${type === 'ordinaria' ? '8' : '5'} dias úteis</span><strong>${longDate(request.local.date)}</strong><small>${sourceMarkup(request.localSource)}</small>${holidayMarkup(request.local.holidays)}</div></div><p class="caution"><strong>Divergência:</strong> os prazos não coincidem. Para planeamento cauteloso, considere o mais cedo: <strong>${longDate(request.cautious)}</strong>. A aplicação jurídica da divergência exige apreciação própria.</p></section>${type === 'extraordinaria' ? `<section class="other-block"><h3>Iniciativa ou requerimento de sessão extraordinária</h3><p>A lei exige convocação nos <strong>5 dias seguintes</strong> à iniciativa da Mesa ou receção do requerimento, e realização da sessão <strong>3 a 10 dias depois</strong> da convocação. O regimento exige ainda pelo menos <strong>5 dias de calendário</strong> entre convocação e sessão. Para esta sessão, a janela conjunta de convocação é de <strong>${longDate(daysBefore(dateInput.value, 10))}</strong> a <strong>${longDate(model.callDate)}</strong>, sujeita também ao prazo contado da iniciativa.</p><label for="initiative-date">Data da iniciativa ou receção do requerimento <span class="optional">opcional</span></label><input id="initiative-date" type="date" value="${initiativeDate}" /><div id="initiative-result">${model.initiative ? `<p>Convocação até <strong>${longDate(model.initiative.latestCall)}</strong> pelo prazo de 5 dias após a iniciativa/requerimento. ${model.initiative.latestCall < daysBefore(dateInput.value, 10) || model.initiative.date > model.callDate ? 'As datas introduzidas não cabem na janela calculada para esta sessão; confirme os factos e os prazos.' : 'Compare esta data com a janela acima.'}</p>` : '<p>Introduza a data para calcular o limite ligado à iniciativa ou ao requerimento. Sem ela, esse limite não pode ser determinado.</p>'}</div><p class="source">${sourceMarkup({ label: 'Lei n.º 75/2013, art. 12.º, n.os 2 e 3', url: SOURCES.law })} · ${sourceMarkup({ label: 'Regimento, art. 24.º', url: SOURCES.reg })}</p></section>` : `<section class="other-block"><h3>Sessões ordinárias</h3><p>A lei prevê quatro sessões anuais, em abril, junho, setembro e novembro ou dezembro. O PAOD tem previsão legal para estas sessões; o regimento de Arroios também o prevê nas extraordinárias.</p><p class="source">${sourceMarkup([{ label: 'Lei n.º 75/2013, arts. 11.º e 52.º', url: SOURCES.law }, { label: 'Regimento, arts. 23.º e 33.º', url: SOURCES.reg }])}</p></section>`}`
-  document.querySelector('#initiative-date')?.addEventListener('change', render)
+  document.querySelector('#initiative-date')?.addEventListener('change', event => {
+    initiativeDate = event.target.value
+    syncUrl()
+    render()
+  })
 }
 
 function updateFromControl(event) {
   if (event.target === dateInput) automaticDate = false
   if (automaticDate && event.target !== dateInput) {
-    const type = document.querySelector('input[name="type"]:checked').value
-    dateInput.value = earliestSessionDate(todayInLisbon(), type, { carnival: carnivalInput.checked })
+    dateInput.value = earliestSessionDate(todayInLisbon(), selectedType(), { carnival: carnivalInput.checked })
   }
+  syncUrl()
   render()
 }
 
 document.querySelector('#controls').addEventListener('input', updateFromControl)
 document.querySelector('#controls').addEventListener('change', updateFromControl)
-render()
+window.addEventListener('popstate', loadUrlState)
+loadUrlState()
+syncUrl()
