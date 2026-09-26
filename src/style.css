@@ -13,6 +13,9 @@
 .session-status--past{background:#eef2f2;border-color:#cbd8da;border-left-color:#738d94;color:#3d5961}
 .session-status--late{background:#fff1ed;border-color:#e8c4ba;border-left-color:#b85c46;color:#803e30}
 .session-status--soon{background:#fbf4e7;border-color:#e5d3ad;border-left-color:#b4853f;color:#755222}
+.date-field-heading{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.date-reset{border:0;background:none;color:#23675e;font-size:.74rem;font-weight:750;padding:0 0 3px;cursor:pointer;white-space:nowrap;text-decoration:underline;text-underline-offset:3px}
+.date-reset:hover{text-decoration-thickness:2px}
 .control-foot[hidden],.check[hidden]{display:none}
 .deadline-day{display:grid;grid-template-columns:150px minmax(0,1fr);gap:0 22px;border-top:1px solid #cddbd5;padding:18px 6px}
 .deadline-day:last-child{border-bottom:1px solid #cddbd5}

@@ -10,7 +10,7 @@ app.innerHTML = `
   <main class="shell">
     <div class="intro"><p class="eyebrow">Ferramenta de preparação de sessões da Assembleia de Freguesia de Arroios</p><h1>Os prazos, antes da assembleia.</h1><p class="lead">Escolha a data da sessão para saber até quando devem ser enviadas a convocatória, a ordem do dia, a documentação e as propostas para o PAOD.</p></div>
     <form class="controls" id="controls">
-      <div class="field"><label for="session-date">Data da sessão</label><input id="session-date" type="date" required aria-describedby="planning-note" /></div>
+      <div class="field"><div class="date-field-heading"><label for="session-date">Data da sessão</label><button class="date-reset" id="reset-date" type="button" title="Calcular a próxima sessão possível" hidden>↺ Próxima data</button></div><input id="session-date" type="date" required aria-describedby="planning-note" /></div>
       <fieldset class="field"><legend>Tipo de sessão</legend><div class="segment"><label><input type="radio" name="type" value="ordinaria" /><span>Ordinária</span></label><label><input type="radio" name="type" value="extraordinaria" checked /><span>Extraordinária</span></label></div></fieldset>
       <div class="control-foot" id="control-foot"><p id="planning-note"></p><label class="check" id="carnival-option"><input id="carnival" type="checkbox" /><span>Contar Carnaval como feriado facultativo</span></label></div>
     </form>
@@ -98,6 +98,7 @@ function deadlineMarkup(items) {
 
 function render() {
   statusBanner.hidden = true
+  document.querySelector('#reset-date').hidden = automaticDate
   if (!dateInput.value) { results.innerHTML = '<p class="error">Escolha uma data para ver os prazos.</p>'; other.innerHTML = ''; return }
   try { parseDate(dateInput.value) } catch { results.innerHTML = '<p class="error">Introduza uma data válida.</p>'; other.innerHTML = ''; return }
   const type = selectedType()
@@ -137,6 +138,13 @@ function updateFromControl(event) {
 
 document.querySelector('#controls').addEventListener('input', updateFromControl)
 document.querySelector('#controls').addEventListener('change', updateFromControl)
+document.querySelector('#reset-date').addEventListener('click', () => {
+  automaticDate = true
+  initiativeDate = ''
+  dateInput.value = earliestSessionDate(todayInLisbon(), selectedType(), { carnival: carnivalInput.checked })
+  syncUrl()
+  render()
+})
 window.addEventListener('popstate', loadUrlState)
 loadUrlState()
 syncUrl()
