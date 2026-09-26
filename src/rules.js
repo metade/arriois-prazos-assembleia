@@ -43,9 +43,9 @@ export function calculate(sessionDate, type, { carnival = false, initiativeDate 
   const activityDispatch = ordinary ? latestWorkingDate(activityDeadline, carnival) : null
   const dates = [
     {
-      id: 'handoff', date: workingDaysBefore(callDispatch.date, 2, carnival).date, title: 'Fechar a documentação', phase: 1,
+      id: 'handoff', date: workingDaysBefore(callDispatch.date, 2, carnival).date, title: 'Preparar propostas e anexos', phase: 1,
       route: 'Junta → Mesa', nature: 'Sugestão interna',
-      detail: 'Reunir as propostas e os anexos, confirmar que o conjunto está completo e obter as assinaturas necessárias antes da expedição. Meta operacional de dois dias úteis antes da convocatória, sem prazo legal próprio.',
+      detail: 'Preferência interna: reunir propostas e anexos e obter as assinaturas necessárias antes da expedição da convocatória. Meta de dois dias úteis, sem prazo legal próprio; a convocatória não tem de levar estes documentos.',
       source: { label: 'Planeamento interno · sem prazo legal', url: null }
     },
     ...(ordinary ? [{
@@ -56,19 +56,19 @@ export function calculate(sessionDate, type, { carnival = false, initiativeDate 
     }] : []),
     {
       id: 'convocation', date: callDispatch.date, title: 'Expedir a convocatória', phase: 2,
-      route: 'Mesa → membros e presidente da Junta', nature: 'Obrigatório',
-      detail: `Dirigir a cada membro e ao presidente da Junta por carta registada com aviso de receção ou por protocolo, com pelo menos ${callDays} dias de calendário de antecedência.${callDispatch.date !== callDate ? ` O último dia de antecedência é ${longDate(callDate)}; a expedição foi antecipada para o dia útil indicado.` : ''}${!callInWindow ? ' Não há dia útil de expedição entre 3 e 10 dias antes desta sessão; reveja a data planeada.' : ''} Confirmar expedição e receção; um email isolado não comprova estas formalidades.`,
+      route: 'Presidente da Assembleia → cada membro e presidente da Junta', nature: 'Obrigatório',
+      detail: `Convocar por carta registada com aviso de receção ou por protocolo, com pelo menos ${callDays} dias de calendário de antecedência.${callDispatch.date !== callDate ? ` O último dia de antecedência é ${longDate(callDate)}; a expedição foi antecipada para o dia útil indicado.` : ''}${!callInWindow ? ' Não há dia útil de expedição entre 3 e 10 dias antes desta sessão; reveja a data planeada.' : ''} Este ato é independente do envio posterior da ordem do dia e da documentação. Confirmar expedição e receção; um email posterior não substitui a convocação formal.`,
       source: [reg('24.º, n.os 2 e 3'), law(ordinary ? '11.º, n.º 1' : '12.º, n.º 2')], holidays: callDispatch.holidays
     },
     {
       id: 'documents', date: dispatch.date, title: 'Enviar a ordem do dia e a documentação', phase: 2,
-      route: 'Mesa → membros', nature: 'Obrigatório',
-      detail: 'Enviar a ordem do dia e, em simultâneo, a documentação completa e acessível a todos os membros, pelo menos dois dias úteis antes.',
+      route: 'Presidente da Assembleia/Mesa → todos os membros', nature: 'Obrigatório',
+      detail: 'Entregar a ordem do dia e enviar em simultâneo a respetiva documentação, com acesso efetivo para todos os membros, pelo menos dois dias úteis antes. O regimento prefere o correio eletrónico. Este prazo é independente da convocatória formal.',
       source: [law('53.º, n.º 2'), reg('25.º, n.º 2 e 35.º, n.º 2')], holidays: dispatch.holidays
     },
     {
       id: 'edict', date: callDispatch.date, title: 'Afixar o edital', phase: 3,
-      route: 'Assembleia → público', nature: 'Obrigatório',
+      route: 'Presidente da Assembleia → público (afixação com apoio da Junta)', nature: 'Obrigatório',
       detail: `Afixar o edital de convocação nos locais habituais, com pelo menos ${callDays} dias de calendário de antecedência.${callDispatch.date !== callDate ? ` O último dia de antecedência é ${longDate(callDate)}; a afixação foi antecipada para o dia útil indicado.` : ''}`,
       source: [reg('24.º, n.os 2 a 4'), law(ordinary ? '11.º, n.º 1' : '12.º, n.º 2')], holidays: callDispatch.holidays
     },

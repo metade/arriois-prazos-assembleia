@@ -41,6 +41,7 @@ test('contagem cruza o ano e usa os feriados de ambos os anos', () => {
 test('sessão extraordinária de 7 de outubro de 2026', () => {
   const result = calculate('2026-10-07', 'extraordinaria')
   assert.equal(result.callDate, '2026-10-02')
+  assert.equal(result.dates.find(x => x.id === 'convocation').date, '2026-10-02')
   assert.equal(result.dates.find(x => x.id === 'documents').date, '2026-10-02')
   assert.equal(result.dates.find(x => x.id === 'edict').date, '2026-10-02')
   assert.equal(result.dates.find(x => x.id === 'publicity').date, '2026-10-02')
@@ -49,6 +50,36 @@ test('sessão extraordinária de 7 de outubro de 2026', () => {
   assert.equal(result.memberRequest.cautious, '2026-09-24')
   assert.ok(!result.dates.some(x => x.id === 'activity'))
   assert.equal(result.initiative, null)
+})
+
+test('3 de outubro: convocatória e edital precedem a ordem do dia com documentação', () => {
+  const result = calculate('2026-10-03', 'extraordinaria')
+  const byId = id => result.dates.find(item => item.id === id)
+  assert.equal(byId('convocation').date, '2026-09-28')
+  assert.equal(byId('edict').date, '2026-09-28')
+  assert.equal(byId('documents').date, '2026-10-01')
+  assert.equal(byId('publicity').date, '2026-10-01')
+  assert.match(byId('convocation').detail, /independente do envio posterior/)
+  assert.match(byId('documents').detail, /em simultâneo a respetiva documentação/)
+  assert.match(byId('handoff').source.label, /sem prazo legal/)
+})
+
+test('7 de outubro: datas coincidentes mantêm obrigações e fontes separadas', () => {
+  const result = calculate('2026-10-07', 'extraordinaria')
+  const byId = id => result.dates.find(item => item.id === id)
+  for (const id of ['convocation', 'documents', 'edict', 'publicity']) {
+    assert.equal(byId(id).date, '2026-10-02')
+    assert.equal(byId(id).nature, 'Obrigatório')
+  }
+  assert.match(byId('convocation').route, /presidente da Junta/)
+  assert.match(byId('convocation').detail, /carta registada com aviso de receção ou por protocolo/)
+  assert.match(byId('convocation').detail, /email posterior não substitui/)
+  assert.match(byId('documents').route, /todos os membros/)
+  assert.match(byId('documents').detail, /correio eletrónico/)
+  assert.match(byId('edict').detail, /Afixar o edital/)
+  assert.match(byId('publicity').detail, /dia, da hora e do local/)
+  assert.match(byId('documents').source[0].label, /53.º, n.º 2/)
+  assert.match(byId('publicity').source.label, /49.º, n.º 3/)
 })
 
 test('sessão ordinária tem convocação, informação da Junta e conflito próprios', () => {

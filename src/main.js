@@ -3,6 +3,7 @@ import { calculate, carnivalAffects, earliestSessionDate, REVIEWED_ON, SOURCES }
 import { daysBefore, longDate, parseDate, parts, todayInLisbon } from './dates.js'
 import { sessionStatus } from './session-status.js'
 import { readUrlState, urlForState } from './url-state.js'
+import { deadlineMarkup, holidayMarkup, sourceMarkup } from './deadline-markup.js'
 
 const app = document.querySelector('#app')
 app.innerHTML = `
@@ -10,7 +11,7 @@ app.innerHTML = `
   <main class="shell">
     <div class="intro"><p class="eyebrow">Ferramenta de preparação de sessões da Assembleia de Freguesia de Arroios</p><h1>Os prazos, antes da assembleia.</h1><p class="lead">Escolha a data da sessão para saber até quando devem ser enviadas a convocatória, a ordem do dia, a documentação e as propostas para o PAOD.</p></div>
     <form class="controls" id="controls">
-      <div class="field"><div class="date-field-heading"><label for="session-date">Data da sessão</label><button class="date-reset" id="reset-date" type="button" title="Calcular a próxima sessão possível" hidden>↺ Próxima data</button></div><input id="session-date" type="date" required aria-describedby="planning-note" /></div>
+      <div class="field"><div class="date-field-heading"><label for="session-date">Data da sessão</label><button class="date-reset" id="reset-date" type="button" title="Calcular a primeira data que admite os prazos" hidden>↺ Data calculada</button></div><input id="session-date" type="date" required aria-describedby="planning-note" /></div>
       <fieldset class="field"><legend>Tipo de sessão</legend><div class="segment"><label><input type="radio" name="type" value="ordinaria" /><span>Ordinária</span></label><label><input type="radio" name="type" value="extraordinaria" checked /><span>Extraordinária</span></label></div></fieldset>
       <div class="control-foot" id="control-foot"><p id="planning-note"></p><label class="check" id="carnival-option"><input id="carnival" type="checkbox" /><span>Contar Carnaval como feriado facultativo</span></label></div>
     </form>
@@ -52,50 +53,6 @@ function syncUrl() {
   window.history.replaceState(null, '', url)
 }
 
-function sourceMarkup(source) {
-  const sources = Array.isArray(source) ? source : [source]
-  return sources.map(item => item.url ? `<a href="${item.url}" target="_blank" rel="noopener noreferrer">${item.label}</a>` : `<span>${item.label}</span>`).join(' <span aria-hidden="true">·</span> ')
-}
-
-function holidayMarkup(holidays = []) {
-  if (!holidays.length) return ''
-  const unique = [...new Map(holidays.map(item => [item.date, item])).values()]
-  return `<p class="holiday">Na contagem: ${unique.map(item => `${item.name} (${longDate(item.date)})`).join('; ')}.</p>`
-}
-
-const phaseTitles = {
-  2: 'Expedir a convocatória e enviar a ordem do dia e a documentação',
-  3: 'Afixar o edital e divulgar a sessão'
-}
-
-function deadlineMarkup(items) {
-  const groups = new Map()
-  for (const item of items) {
-    if (!groups.has(item.date)) groups.set(item.date, [])
-    groups.get(item.date).push(item)
-  }
-  return [...groups].map(([date, dayItems]) => {
-    const phases = []
-    for (const item of dayItems) {
-      const last = phases.at(-1)
-      if (item.phase && last?.phase === item.phase) last.items.push(item)
-      else phases.push({ phase: item.phase, items: [item] })
-    }
-    const holidays = dayItems.flatMap(item => item.holidays || [])
-    const prefix = dayItems.every(item => item.nature === 'Sugestão interna') ? 'Meta interna · até'
-      : dayItems.every(item => item.nature === 'Preferencial') ? 'Preferencialmente até' : 'Até'
-    return `<section class="deadline-day" aria-label="${prefix} ${longDate(date)}">
-      <div class="day-heading"><time datetime="${date}"><span>${prefix}</span> ${longDate(date)}</time></div>
-      <div class="day-actions">${phases.map(({ phase, items: actions }) => `<article class="deadline">
-        <div class="deadline-heading">${phase ? `<span class="phase-number" aria-label="Etapa ${phase}">${phase}</span>` : ''}<h3>${actions.length > 1 ? phaseTitles[phase] : actions[0].title}</h3></div>
-        ${actions.map(item => `<div class="requirement"><p class="route">${item.route}</p>${actions.length > 1 ? `<h4>${item.title}</h4>` : ''}<p>${item.detail}</p><p class="source">${sourceMarkup(item.source)}</p></div>`).join('')}
-        <span class="badge ${actions[0].nature === 'Obrigatório' ? '' : 'soft'}">${actions[0].nature}</span>
-      </article>`).join('')}</div>
-      ${holidayMarkup(holidays)}
-    </section>`
-  }).join('')
-}
-
 function render() {
   statusBanner.hidden = true
   document.querySelector('#reset-date').hidden = automaticDate
@@ -113,7 +70,7 @@ function render() {
   carnivalOption.hidden = !carnivalAffects(dateInput.value, type)
   document.querySelector('#control-foot').hidden = planningNote.hidden && carnivalOption.hidden
   planningNote.textContent = automaticDate
-    ? `Primeira data calculada desde hoje (${longDate(todayInLisbon())}), com afixação e expedição em dia útil. Confirme a expedição, a receção e o acesso aos anexos.`
+    ? `Primeira data em que os prazos calculados ainda podem ser cumpridos desde hoje (${longDate(todayInLisbon())}), com afixação e expedição previstas em dia útil. A data não verifica a preparação dos documentos, a expedição, a receção nem o acesso efetivo.`
     : ''
   document.querySelector('#session-summary').textContent = `${type === 'ordinaria' ? 'Sessão ordinária' : 'Sessão extraordinária'} · ${longDate(dateInput.value)}`
   results.innerHTML = deadlineMarkup(model.dates)
