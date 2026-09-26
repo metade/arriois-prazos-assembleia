@@ -1,6 +1,7 @@
 import './style.css'
 import { calculate, carnivalAffects, earliestSessionDate, REVIEWED_ON, SOURCES } from './rules.js'
 import { daysBefore, longDate, parseDate, parts, todayInLisbon } from './dates.js'
+import { sessionStatus } from './session-status.js'
 import { readUrlState, urlForState } from './url-state.js'
 
 const app = document.querySelector('#app')
@@ -13,6 +14,7 @@ app.innerHTML = `
       <fieldset class="field"><legend>Tipo de sessão</legend><div class="segment"><label><input type="radio" name="type" value="ordinaria" /><span>Ordinária</span></label><label><input type="radio" name="type" value="extraordinaria" checked /><span>Extraordinária</span></label></div></fieldset>
       <div class="control-foot" id="control-foot"><p id="planning-note"></p><label class="check" id="carnival-option"><input id="carnival" type="checkbox" /><span>Contar Carnaval como feriado facultativo</span></label></div>
     </form>
+    <section class="session-status" id="session-status" aria-live="polite" hidden></section>
     <section class="calendar" aria-labelledby="calendar-title"><div class="section-heading"><div><p class="eyebrow">Da preparação ao PAOD</p><h2 id="calendar-title">O calendário da sessão</h2></div><p id="session-summary"></p></div><div id="results" aria-live="polite"></div></section>
     <details class="other" id="other"><summary><span><strong>Outros prazos</strong><small>Pedido individual para a ordem do dia formal e condições de sessões extraordinárias</small></span><span aria-hidden="true">⌄</span></summary><div id="other-content"></div></details>
     <section class="method" id="fontes"><h2>Fontes e método</h2><p>Este calendário ajuda a planear. Não conclui se uma sessão é legalmente válida: é necessário verificar a convocatória, a receção, a publicidade e o acesso real aos anexos.</p><div class="source-grid"><div><h3>Lei nacional</h3><p><a href="${SOURCES.law}" target="_blank" rel="noopener noreferrer">Lei n.º 75/2013, texto consolidado ↗</a></p><p>Regras de convocação, publicidade, PAOD e ordem do dia.</p></div><div><h3>Regimento local</h3><p><a href="${SOURCES.reg}" target="_blank" rel="noopener noreferrer">Regimento da Assembleia de Arroios ↗</a></p><p>PDF identificado como “dezembro 2021”; o texto declara aprovação em <strong>30 de junho de 2014</strong> e entrada em vigor em 1 de julho de 2014.</p></div><div><h3>Feriados</h3><p><a href="${SOURCES.labour}" target="_blank" rel="noopener noreferrer">Código do Trabalho, arts. 234.º e 235.º ↗</a></p><p>Feriados nacionais, 13 de junho em Lisboa e opção de Carnaval. Dias úteis excluem fins de semana.</p></div></div><p class="review">Regras verificadas em <strong>${REVIEWED_ON}</strong>. Antes de usar noutra data, confirme se as fontes foram alteradas. As sugestões internas são identificadas no calendário.</p></section>
@@ -21,6 +23,7 @@ app.innerHTML = `
 const dateInput = document.querySelector('#session-date')
 const carnivalInput = document.querySelector('#carnival')
 const results = document.querySelector('#results')
+const statusBanner = document.querySelector('#session-status')
 const other = document.querySelector('#other-content')
 let automaticDate = true
 let initiativeDate = ''
@@ -94,10 +97,15 @@ function deadlineMarkup(items) {
 }
 
 function render() {
+  statusBanner.hidden = true
   if (!dateInput.value) { results.innerHTML = '<p class="error">Escolha uma data para ver os prazos.</p>'; other.innerHTML = ''; return }
   try { parseDate(dateInput.value) } catch { results.innerHTML = '<p class="error">Introduza uma data válida.</p>'; other.innerHTML = ''; return }
   const type = selectedType()
   const model = calculate(dateInput.value, type, { carnival: carnivalInput.checked, initiativeDate })
+  const status = sessionStatus(dateInput.value, todayInLisbon(), model)
+  statusBanner.className = `session-status session-status--${status.tone}`
+  statusBanner.innerHTML = `<span class="session-status-label">${status.label}</span><strong>${status.title}</strong><p>${status.detail}</p>`
+  statusBanner.hidden = false
   const planningNote = document.querySelector('#planning-note')
   const carnivalOption = document.querySelector('#carnival-option')
   planningNote.hidden = !automaticDate
