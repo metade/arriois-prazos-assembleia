@@ -6,7 +6,7 @@ export const SOURCES = {
   reg: 'https://jfarroios.pt/wp-content/uploads/2022/09/Regimento_Dez2021_pdf.pdf',
   labour: 'https://diariodarepublica.pt/dr/legislacao-consolidada/lei/2009-34546475'
 }
-export const REVIEWED_ON = '26 de setembro de 2026'
+export const REVIEWED_ON = '14 de novembro de 2026'
 
 const law = (article) => ({ label: `Lei n.º 75/2013, art. ${article}`, url: SOURCES.law })
 const reg = (article) => ({ label: `Regimento de Arroios, art. ${article}`, url: SOURCES.reg })
