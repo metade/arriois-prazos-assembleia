@@ -16,7 +16,7 @@ app.innerHTML = `
     <form class="controls" id="controls">
       <div class="field"><div class="date-field-heading"><label for="session-date">Data da sessão</label><button class="date-reset" id="reset-date" type="button" title="Calcular a primeira data que admite os prazos" hidden>↺ Data calculada</button></div><input id="session-date" type="date" required aria-describedby="planning-note" /></div>
       <fieldset class="field"><legend>Tipo de sessão</legend><div class="segment"><label><input type="radio" name="type" value="ordinaria" /><span>Ordinária</span></label><label><input type="radio" name="type" value="extraordinaria" checked /><span>Extraordinária</span></label></div></fieldset>
-      <p class="step-planning-note">Ajuste a data de cada etapa com − e +, ou escolha uma data. A margem é calculada automaticamente; os limites legais mantêm-se.</p>
+      <p class="step-planning-note">Ajuste a data de cada etapa com ‹ e ›, ou escolha uma data. A margem é calculada automaticamente; os limites legais mantêm-se.</p>
       <div class="control-foot" id="control-foot"><p id="planning-note"></p><label class="check" id="carnival-option"><input id="carnival" type="checkbox" /><span>Contar Carnaval como feriado facultativo</span></label></div>
     </form>
     <section class="session-status" id="session-status" aria-live="polite" hidden></section>
