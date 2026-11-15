@@ -42,3 +42,11 @@ export function shortMonth(value) {
   const { month } = parts(parseDate(value))
   return ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'][month - 1]
 }
+
+// A planning cutoff for postal dispatch, independent of the legal deadlines.
+export function postalCutoffReached(now = new Date()) {
+  const hour = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/Lisbon', hour: '2-digit', hourCycle: 'h23'
+  }).format(now)
+  return Number(hour) >= 17
+}

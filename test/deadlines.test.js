@@ -7,6 +7,9 @@ import { todayInLisbon } from '../src/dates.js'
 test('feriados móveis em vários anos', () => {
   assert.equal(easter(2026), '2026-04-05')
   assert.equal(easter(2027), '2027-03-28')
+  assert.equal(easter(2028), '2028-04-16')
+  assert.equal(holidays(2028).get('2028-04-14'), 'Sexta-feira Santa')
+  assert.equal(holidays(2028).get('2028-06-15'), 'Corpo de Deus')
   assert.equal(holidays(2026).get('2026-04-03'), 'Sexta-feira Santa')
   assert.equal(holidays(2026).get('2026-06-04'), 'Corpo de Deus')
   assert.equal(holidays(2027).get('2027-03-26'), 'Sexta-feira Santa')
@@ -122,9 +125,9 @@ test('a data atual usa o calendário de Lisboa mesmo perto da meia-noite', () =>
   assert.equal(todayInLisbon(new Date('2026-12-31T23:30:00Z')), '2026-12-31')
 })
 
-test('data inicial é a primeira que permite os prazos obrigatórios', () => {
-  assert.equal(earliestSessionDate('2026-09-26', 'extraordinaria'), '2026-10-03')
-  assert.equal(earliestSessionDate('2026-10-02', 'extraordinaria'), '2026-10-07')
+test('data inicial permite os prazos e a margem de preparação', () => {
+  assert.equal(earliestSessionDate('2026-09-26', 'extraordinaria'), '2026-10-05')
+  assert.equal(earliestSessionDate('2026-10-02', 'extraordinaria'), '2026-10-12')
   assert.equal(earliestSessionDate('2026-09-26', 'ordinaria'), '2026-11-01')
   const date = earliestSessionDate('2026-04-01', 'extraordinaria')
   const result = calculate(date, 'extraordinaria')
