@@ -10,7 +10,7 @@ test('obrigações coincidentes continuam distintas e com meta visível em cada 
   for (const id of ['convocation', 'documents', 'edict', 'publicity']) {
     const card = html.match(new RegExp(`<article[^>]+data-step="${id}"[\\s\\S]*?<\\/article>`))?.[0]
     assert.ok(card)
-    assert.match(card, /<time datetime="2026-10-02">2 de outubro de 2026<\/time>/)
+    assert.match(card, /<time datetime="2026-10-01">1 de outubro de 2026<\/time>/)
     assert.match(card, /Meta planeada · até/)
   }
   assert.doesNotMatch(html, /deadline-day|day-heading/)

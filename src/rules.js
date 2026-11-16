@@ -1,12 +1,13 @@
-import { daysBefore, formatDate, longDate, parseDate, parts, postalCutoffReached, todayInLisbon } from './dates.js'
-import { latestWorkingDate, workingDaysBefore } from './holidays.js'
+import { daysBefore, fullDaysBefore, formatDate, longDate, parseDate, parts, postalCutoffReached, todayInLisbon } from './dates.js'
+import { fullWorkingDaysBefore, latestWorkingDate, workingDaysBefore } from './holidays.js'
 
 export const SOURCES = {
   law: 'https://diariodarepublica.pt/dr/legislacao-consolidada/lei/2013-56366098',
   reg: 'https://jfarroios.pt/wp-content/uploads/2022/09/Regimento_Dez2021_pdf.pdf',
-  labour: 'https://diariodarepublica.pt/dr/legislacao-consolidada/lei/2009-34546475'
+  labour: 'https://diariodarepublica.pt/dr/legislacao-consolidada/lei/2009-34546475',
+  documentsOpinion: 'https://www.ccdr-lvt.pt/wp-content/uploads/2022/03/Parecer-Juridico-1-2022.pdf'
 }
-export const REVIEWED_ON = '15 de novembro de 2026'
+export const REVIEWED_ON = '16 de novembro de 2026'
 
 const law = (article) => ({ label: `Lei n.º 75/2013, art. ${article}`, url: SOURCES.law })
 const reg = (article) => ({ label: `Regimento de Arroios, art. ${article}`, url: SOURCES.reg })
@@ -48,9 +49,13 @@ export function calculate(sessionDate, type, { carnival = false, initiativeDate 
   const ordinary = type === 'ordinaria'
   const callDays = ordinary ? 8 : 5
   const callDate = daysBefore(sessionDate, callDays)
-  const callDispatch = latestWorkingDate(callDate, carnival)
+  // Cautious planning, distinct from the existing legal reference: leave full
+  // intervening calendar days, then find a working day for dispatch/posting.
+  const callPlanningDate = fullDaysBefore(sessionDate, callDays)
+  const callDispatch = latestWorkingDate(callPlanningDate, carnival)
   const callInWindow = ordinary || callDispatch.date >= daysBefore(sessionDate, 10)
-  const dispatch = workingDaysBefore(sessionDate, 2, carnival)
+  // CCDR-LVT opinion 1/2022: two full working days between delivery and session.
+  const dispatch = fullWorkingDaysBefore(sessionDate, 2, carnival)
   const activityDeadline = ordinary ? daysBefore(sessionDate, 5) : null
   const activityDispatch = ordinary ? latestWorkingDate(activityDeadline, carnival) : null
   const preparation = workingDaysBefore(callDispatch.date, bufferDays, carnival)
@@ -77,26 +82,26 @@ export function calculate(sessionDate, type, { carnival = false, initiativeDate 
     {
       id: 'convocation', date: callDispatch.date, title: 'Expedir a convocatória', phase: 2,
       route: 'Presidente da Assembleia → cada membro e presidente da Junta', nature: 'Obrigatório',
-      detail: `Convocar por carta registada com aviso de receção ou por protocolo, com pelo menos ${callDays} dias de calendário de antecedência.${callDispatch.date !== callDate ? ` O último dia de antecedência é ${longDate(callDate)}; a expedição foi antecipada para o dia útil indicado.` : ''}${!callInWindow ? ' Não há dia útil de expedição entre 3 e 10 dias antes desta sessão; reveja a data planeada.' : ''} Este ato é independente do envio posterior da ordem do dia e da documentação. Confirmar expedição e receção; um email posterior não substitui a convocação formal.`,
+      detail: `Convocar por carta registada com aviso de receção ou por protocolo, com pelo menos ${callDays} dias de calendário de antecedência.${callDispatch.date !== callPlanningDate ? ' A expedição foi antecipada para um dia útil.' : ''}${!callInWindow ? ' Não há dia útil de expedição entre 3 e 10 dias antes desta sessão; reveja a data planeada.' : ''} Este ato é independente do envio posterior da ordem do dia e da documentação. Confirmar expedição e receção; um email posterior não substitui a convocação formal. O trânsito postal não é somado automaticamente a esta antecedência e a expedição não confirma a receção.`,
       cutoff: 'Expedição pelos CTT: antes das 17h00',
       source: [reg('24.º, n.os 2 e 3'), law(ordinary ? '11.º, n.º 1' : '12.º, n.º 2')], holidays: callDispatch.holidays
     },
     {
       id: 'documents', date: dispatch.date, title: 'Enviar a ordem do dia e a documentação', phase: 2,
       route: 'Presidente da Assembleia/Mesa → todos os membros', nature: 'Obrigatório',
-      detail: 'Entregar a ordem do dia e enviar em simultâneo a respetiva documentação, com acesso efetivo para todos os membros, pelo menos dois dias úteis antes. O regimento prefere o correio eletrónico. Este prazo é independente da convocatória formal.',
-      source: [law('53.º, n.º 2'), reg('25.º, n.º 2 e 35.º, n.º 2')], holidays: dispatch.holidays
+      detail: 'Entregar a ordem do dia e enviar em simultâneo a respetiva documentação, com acesso efetivo para todos os membros. Deixar pelo menos dois dias úteis completos entre a entrega e a sessão, sem contar o dia da entrega nem o da sessão. O regimento prefere o correio eletrónico. Este prazo é independente da convocatória formal.',
+      source: [law('53.º, n.º 2'), reg('25.º, n.º 2 e 35.º, n.º 2'), { label: 'CCDR-LVT, parecer jurídico n.º 1/2022', url: SOURCES.documentsOpinion }], holidays: dispatch.holidays
     },
     {
       id: 'edict', date: callDispatch.date, title: 'Afixar o edital', phase: 3,
       route: 'Presidente da Assembleia → público (afixação com apoio da Junta)', nature: 'Obrigatório',
-      detail: `Obter a assinatura do presidente da Mesa antes de enviar o edital para afixação. Afixar o edital de convocação nos locais habituais, com pelo menos ${callDays} dias de calendário de antecedência.${callDispatch.date !== callDate ? ` O último dia de antecedência é ${longDate(callDate)}; a afixação foi antecipada para o dia útil indicado.` : ''}`,
+      detail: `Obter a assinatura do presidente da Mesa antes de enviar o edital para afixação. Afixar o edital de convocação nos locais habituais, com pelo menos ${callDays} dias de calendário de antecedência.${callDispatch.date !== callPlanningDate ? ' A afixação foi antecipada para um dia útil.' : ''}`,
       source: [reg('21.º, n.º 1, al. i) e 24.º, n.os 2 a 4'), law(ordinary ? '11.º, n.º 1' : '12.º, n.º 2')], holidays: callDispatch.holidays
     },
     {
       id: 'publicity', date: dispatch.date, title: 'Divulgar a sessão', phase: 3,
       route: 'Assembleia → público', nature: 'Obrigatório',
-      detail: 'Informar o público do dia, da hora e do local da sessão com pelo menos dois dias úteis de antecedência.',
+      detail: 'Informar o público do dia, da hora e do local da sessão com pelo menos dois dias úteis completos de antecedência, sem contar o dia da divulgação nem o da sessão.',
       source: law('49.º, n.º 3'), holidays: dispatch.holidays
     },
     {
@@ -146,6 +151,10 @@ export function calculate(sessionDate, type, { carnival = false, initiativeDate 
     receipt.date = plannedCall.date
     receipt.bufferNote = 'Meta limitada pela expedição planeada: não é possível confirmar a receção antes de expedir.'
   }
+  for (const item of dates.filter(item => ['convocation', 'edict'].includes(item.id))) {
+    const fullDays = parseDate(sessionDate) - parseDate(item.date) - 1
+    item.countingNote = `${fullDays} dias de calendário completos entre ${item.id === 'convocation' ? 'a expedição' : 'a afixação'} e a sessão. Excluem-se o dia do ato e o da sessão. Contagem de planeamento cauteloso; a margem ajustável é adicional.`
+  }
   dates.sort((a, b) => a.date.localeCompare(b.date) || STEP_IDS.indexOf(a.id) - STEP_IDS.indexOf(b.id))
 
   const national = workingDaysBefore(sessionDate, ordinary ? 5 : 8, carnival)
@@ -162,7 +171,7 @@ export function calculate(sessionDate, type, { carnival = false, initiativeDate 
     parseDate(initiativeDate)
     initiative = { date: initiativeDate, latestCall: daysBefore(initiativeDate, -5) }
   }
-  return { sessionDate, type, carnival, bufferDays, stepBuffers, dates, memberRequest, initiative, callDate,
+  return { sessionDate, type, carnival, bufferDays, stepBuffers, dates, memberRequest, initiative, callDate, callPlanningDate,
     callDispatch: { date: plannedCall.date, holidays: plannedCall.holidays },
     callInWindow: ordinary || plannedCall.date >= daysBefore(sessionDate, 10), callDays,
     dispatch: { date: dates.find(item => item.id === 'documents').date, holidays: dispatch.holidays } }

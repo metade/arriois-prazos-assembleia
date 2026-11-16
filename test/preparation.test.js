@@ -17,15 +17,15 @@ test('margens 0 a 5 só mudam a preparação, preservam limites legais e cruzam 
     assert.equal(model.callDate, '2027-01-01')
     assert.deepEqual(model.dates.filter(x => x.id !== 'handoff'), base.dates.filter(x => x.id !== 'handoff'))
   }
-  assert.equal(preparation(calculate('2026-06-22', 'extraordinaria', { bufferDays: 5 })).date, '2026-06-09')
+  assert.equal(preparation(calculate('2026-06-22', 'extraordinaria', { bufferDays: 5 })).date, '2026-06-08')
   for (const bufferDays of [-1, 6, 2.5, '5', NaN]) assert.equal(calculate('2027-01-06', 'extraordinaria', { bufferDays }).bufferDays, 2)
 })
 
 test('Carnaval pode afetar apenas a margem de preparação', () => {
   assert.equal(carnivalAffects('2026-02-28', 'extraordinaria', { bufferDays: 0 }), false)
   assert.equal(carnivalAffects('2026-02-28', 'extraordinaria', { bufferDays: 5 }), true)
-  assert.equal(preparation(calculate('2026-02-28', 'extraordinaria', { bufferDays: 5 })).date, '2026-02-16')
-  assert.equal(preparation(calculate('2026-02-28', 'extraordinaria', { bufferDays: 5, carnival: true })).date, '2026-02-13')
+  assert.equal(preparation(calculate('2026-02-28', 'extraordinaria', { bufferDays: 5 })).date, '2026-02-13')
+  assert.equal(preparation(calculate('2026-02-28', 'extraordinaria', { bufferDays: 5, carnival: true })).date, '2026-02-12')
 })
 
 test('sugestão automática respeita a margem e a janela extraordinária', () => {
@@ -44,8 +44,8 @@ test('sugestão automática respeita a margem e a janela extraordinária', () =>
 
 test('17h00 de Lisboa inclui verão e inverno e muda apenas a sugestão automática', () => {
   for (const [today, before, after, session] of [
-    ['2026-10-02', '2026-10-02T15:59:59Z', '2026-10-02T16:00:00Z', '2026-10-07'],
-    ['2026-12-30', '2026-12-30T16:59:59Z', '2026-12-30T17:00:00Z', '2027-01-04']
+    ['2026-10-02', '2026-10-02T15:59:59Z', '2026-10-02T16:00:00Z', '2026-10-08'],
+    ['2026-12-30', '2026-12-30T16:59:59Z', '2026-12-30T17:00:00Z', '2027-01-05']
   ]) {
     assert.equal(postalCutoffReached(new Date(before)), false)
     assert.equal(postalCutoffReached(new Date(after)), true)

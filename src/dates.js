@@ -23,6 +23,12 @@ export function daysBefore(value, amount) {
   return formatDate(parseDate(value) - amount)
 }
 
+// Leave `amount` complete calendar dates strictly between the act and session.
+// Unlike a duration, neither endpoint counts towards this planning interval.
+export function fullDaysBefore(value, amount) {
+  return daysBefore(value, amount + 1)
+}
+
 export function todayInLisbon(now = new Date()) {
   // Only "today" needs a real instant. Convert it to Lisbon's calendar date
   // before doing any deadline arithmetic, including around midnight and DST.

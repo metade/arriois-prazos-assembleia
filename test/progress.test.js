@@ -32,10 +32,10 @@ test('margens cruzam feriados e anos sem alterar os limites; receção não prec
   const model = calculate('2027-01-06', 'extraordinaria', { stepBuffers: { convocation: 2, documents: 5, receipt: 5 } })
   assert.equal(model.callDate, '2027-01-01')
   assert.equal(model.callDispatch.date, '2026-12-29')
-  assert.equal(byId(model, 'documents').legalDate, '2027-01-04')
-  assert.equal(byId(model, 'documents').date, '2026-12-24')
+  assert.equal(byId(model, 'documents').legalDate, '2026-12-31')
+  assert.equal(byId(model, 'documents').date, '2026-12-23')
   assert.ok(byId(model, 'receipt').date >= model.callDispatch.date)
-  assert.equal(byId(calculate('2026-06-22', 'ordinaria', { stepBuffers: { documents: 5 } }), 'documents').date, '2026-06-11')
+  assert.equal(byId(calculate('2026-06-22', 'ordinaria', { stepBuffers: { documents: 5 } }), 'documents').date, '2026-06-09')
 })
 
 test('margens altas respeitam janela extraordinária e assinalam limites', () => {

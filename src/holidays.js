@@ -61,3 +61,8 @@ export function workingDaysBefore(value, amount, carnival = false) {
   }
   return { date: formatDate(cursor), holidays: crossed }
 }
+
+// The act must occur before the first of the intervening working days.
+export function fullWorkingDaysBefore(value, amount, carnival = false) {
+  return workingDaysBefore(value, amount + 1, carnival)
+}

@@ -56,6 +56,7 @@
 .deadline .completion-record{color:#236348;font-weight:750;margin:10px 0 6px}
 .deadline .completion-issue{color:#803e30;background:#fff1ed;padding:9px 11px;margin:8px 0;border-left:3px solid #b85c46}
 .step-footer{margin-top:15px;border-top:1px solid #d5e1dc;padding-top:13px}
+.deadline .counting-note{font-size:.76rem;line-height:1.5;color:#536b69;margin:10px 0 0}
 .step-controls{display:grid;grid-template-columns:minmax(0,310px) auto;justify-content:start;gap:18px;align-items:start;min-width:0}
 .step-controls label{display:block;font-size:.78rem;line-height:1.4;font-weight:750;color:#315b58;margin-bottom:6px}
 .step-controls .check{display:flex;align-items:center;gap:8px;min-height:44px;margin:22px 0 0}
